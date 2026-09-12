@@ -70,4 +70,4 @@ if st.button("🌱 Recommend Crop", type="primary", use_container_width=True):
     st.subheader("Top 3 predictions")
     st.dataframe(result, use_container_width=True, hide_index=True)
 
-st.caption("Educational project based on the Kaggle Crop Recommendation Dataset.")
+

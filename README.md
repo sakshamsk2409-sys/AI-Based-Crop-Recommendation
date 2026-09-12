@@ -126,18 +126,7 @@ For suitable agricultural conditions, the application returns a recommended crop
 Recommended Crop: rice
 ```
 
-## GitHub Workflow
 
-After testing locally:
-
-```bash
-git init
-git add .
-git commit -m "Initial crop recommendation AI system"
-git branch -M main
-git remote add origin https://github.com/<YOUR_USERNAME>/agri-ai-crop-recommendation.git
-git push -u origin main
-```
 
 ## Important
 

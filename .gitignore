@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.DS_Store
+
+# Local dataset
+data/*.csv
+data/*.zip
+
+# Trained models and generated reports
+models/*.joblib
+reports/*.png
+reports/*.txt

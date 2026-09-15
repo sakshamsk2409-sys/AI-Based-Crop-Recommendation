@@ -3,25 +3,16 @@ import joblib
 import pandas as pd
 import streamlit as st
 
+
 # ============================================================
-# CONFIGURATION
+# CONFIG
 # ============================================================
 
 ROOT = Path(__file__).resolve().parent
 MODEL_PATH = ROOT / "models" / "crop_recommendation_pipeline.joblib"
 
-FEATURES = [
-    "N",
-    "P",
-    "K",
-    "temperature",
-    "humidity",
-    "ph",
-    "rainfall",
-]
-
 st.set_page_config(
-    page_title="Agri-AI | Smart Crop Recommendation",
+    page_title="Agri-AI | Crop Recommendation",
     page_icon="🌾",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -29,379 +20,567 @@ st.set_page_config(
 
 
 # ============================================================
-# CUSTOM CSS
+# DARK THEME
 # ============================================================
 
-st.markdown(
-    """
-    <style>
+st.html("""
+<style>
 
-    /* ---------- GLOBAL ---------- */
+    /* ========================================================
+       GLOBAL
+    ======================================================== */
 
-    .stApp {
+    html, body, [data-testid="stAppViewContainer"] {
+        background: #0b0f0d !important;
+    }
+
+    [data-testid="stAppViewContainer"] {
         background:
             radial-gradient(
-                circle at 85% 5%,
-                rgba(42, 157, 96, 0.10),
-                transparent 28%
+                circle at 85% 0%,
+                rgba(50, 120, 75, 0.12),
+                transparent 30%
             ),
             radial-gradient(
-                circle at 5% 90%,
-                rgba(230, 180, 70, 0.07),
-                transparent 25%
+                circle at 0% 100%,
+                rgba(39, 90, 57, 0.08),
+                transparent 30%
             ),
-            #f7f9f6;
+            #0b0f0d !important;
+    }
+
+    [data-testid="stHeader"] {
+        background: transparent !important;
+    }
+
+    [data-testid="stToolbar"] {
+        display: none;
     }
 
     .main .block-container {
-        max-width: 1180px;
-        padding-top: 2rem;
-        padding-bottom: 4rem;
+        max-width: 1250px;
+        padding-top: 28px;
+        padding-bottom: 70px;
     }
 
-    /* Remove Streamlit top padding */
-    [data-testid="stHeader"] {
-        background: transparent;
-    }
 
-    /* ---------- TOP NAV ---------- */
+    /* ========================================================
+       TOP NAVIGATION
+    ======================================================== */
 
-    .top-nav {
+    .nav {
+        height: 62px;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        padding: 0.4rem 0 1.8rem 0;
-        border-bottom: 1px solid #e4e9e3;
-        margin-bottom: 3rem;
+        justify-content: space-between;
+
+        border-bottom: 1px solid #202923;
+
+        margin-bottom: 55px;
     }
 
     .brand {
         display: flex;
         align-items: center;
-        gap: 10px;
-        font-size: 1.15rem;
+        gap: 12px;
+
+        color: #f1f5f2;
+        font-size: 18px;
         font-weight: 800;
-        color: #173b28;
-        letter-spacing: -0.3px;
     }
 
     .brand-icon {
         width: 38px;
         height: 38px;
-        border-radius: 12px;
+
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #173b28;
-        font-size: 21px;
+
+        border-radius: 11px;
+
+        background: #183c27;
+
+        font-size: 20px;
     }
 
     .nav-right {
-        color: #718075;
-        font-size: 0.88rem;
+        color: #758178;
+        font-size: 13px;
     }
 
-    /* ---------- HERO ---------- */
+
+    /* ========================================================
+       HERO
+    ======================================================== */
 
     .hero {
-        padding: 0 0 2.8rem 0;
+        margin-bottom: 48px;
     }
 
-    .hero-tag {
+    .eyebrow {
         display: inline-block;
-        padding: 7px 13px;
-        border-radius: 50px;
-        background: #e7f3e9;
-        color: #267044;
-        font-size: 0.78rem;
+
+        padding: 7px 12px;
+
+        border: 1px solid #244c32;
+        border-radius: 20px;
+
+        background: #101c15;
+
+        color: #6fc284;
+
+        font-size: 11px;
         font-weight: 800;
-        letter-spacing: 0.7px;
-        margin-bottom: 1rem;
+
+        letter-spacing: 1.2px;
         text-transform: uppercase;
     }
 
-    .hero h1 {
-        font-size: 3.15rem;
-        line-height: 1.08;
-        letter-spacing: -2px;
-        color: #173b28;
-        margin: 0;
+    .hero-title {
+        margin-top: 18px;
+
+        color: #f2f6f3;
+
+        font-size: 48px;
+        line-height: 1.05;
+
         font-weight: 850;
+
+        letter-spacing: -1.8px;
     }
 
-    .hero h1 span {
-        color: #3d8b54;
+    .hero-title span {
+        color: #62b976;
     }
 
-    .hero p {
-        color: #68756c;
-        font-size: 1.05rem;
-        margin-top: 1rem;
-        max-width: 650px;
-        line-height: 1.65;
+    .hero-description {
+        max-width: 680px;
+
+        margin-top: 16px;
+
+        color: #89958d;
+
+        font-size: 15px;
+        line-height: 1.7;
     }
 
-    /* ---------- SECTION HEADINGS ---------- */
 
-    .section-heading {
+    /* ========================================================
+       SECTION HEADERS
+    ======================================================== */
+
+    .section-header {
         display: flex;
         align-items: center;
-        gap: 10px;
-        margin: 1rem 0 1rem 0;
+        gap: 12px;
+
+        margin-bottom: 20px;
     }
 
     .section-icon {
-        width: 38px;
-        height: 38px;
-        border-radius: 11px;
+        width: 40px;
+        height: 40px;
+
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #e8f3e9;
+
+        border-radius: 11px;
+
+        background: #122117;
+
+        border: 1px solid #203c2a;
+
         font-size: 19px;
     }
 
     .section-title {
-        color: #173b28;
-        font-size: 1.15rem;
+        color: #e8eee9;
+
+        font-size: 16px;
         font-weight: 800;
-        margin: 0;
     }
 
     .section-subtitle {
-        color: #7b867d;
-        font-size: 0.78rem;
-        margin-top: 2px;
+        margin-top: 3px;
+
+        color: #69756d;
+
+        font-size: 12px;
     }
 
-    /* ---------- INPUT CARDS ---------- */
+
+    /* ========================================================
+       CARDS
+    ======================================================== */
 
     [data-testid="stVerticalBlockBorderWrapper"] {
-        background: rgba(255, 255, 255, 0.82);
-        border: 1px solid #e1e8e1;
-        border-radius: 20px;
-        box-shadow: 0 8px 30px rgba(31, 62, 42, 0.055);
+        background: #111714 !important;
+
+        border: 1px solid #222d26 !important;
+
+        border-radius: 18px !important;
+
+        box-shadow:
+            0 10px 35px rgba(0,0,0,0.22) !important;
     }
 
-    /* Input labels */
+
+    /* ========================================================
+       NUMBER INPUTS
+    ======================================================== */
+
     [data-testid="stNumberInput"] label {
-        color: #46554b !important;
-        font-weight: 700 !important;
-        font-size: 0.86rem !important;
-    }
+        color: #89968e !important;
 
-    /* Input box */
-    [data-testid="stNumberInput"] input {
-        background: #f8faf8 !important;
-        border: 1px solid #dfe6df !important;
-        border-radius: 11px !important;
-        color: #1c3324 !important;
+        font-size: 12px !important;
+
         font-weight: 650 !important;
     }
 
-    [data-testid="stNumberInput"] input:focus {
-        border-color: #4d9361 !important;
-        box-shadow: 0 0 0 2px rgba(77, 147, 97, 0.12) !important;
+    [data-testid="stNumberInput"] input {
+        height: 43px !important;
+
+        background: #0c110e !important;
+
+        color: #e7eee9 !important;
+
+        border: 1px solid #29352d !important;
+
+        border-radius: 10px !important;
+
+        font-size: 14px !important;
+
+        font-weight: 700 !important;
     }
 
-    /* ---------- BUTTON ---------- */
+    [data-testid="stNumberInput"] input:focus {
+        border-color: #4e9a62 !important;
+
+        box-shadow:
+            0 0 0 1px #4e9a62 !important;
+    }
+
+    [data-testid="stNumberInput"] button {
+        background: #171f1a !important;
+
+        color: #9aa69e !important;
+
+        border: none !important;
+    }
+
+
+    /* ========================================================
+       RECOMMEND BUTTON
+    ======================================================== */
 
     div[data-testid="stFormSubmitButton"] button {
-        width: 100%;
-        min-height: 58px;
-        border-radius: 14px;
-        border: none;
-        background: #173b28;
-        color: white;
-        font-size: 1rem;
-        font-weight: 800;
-        letter-spacing: 0.2px;
-        box-shadow: 0 10px 25px rgba(23, 59, 40, 0.18);
-        transition: all 0.2s ease;
+        height: 58px !important;
+
+        border-radius: 13px !important;
+
+        background: #2f8a4b !important;
+
+        border: 1px solid #3b9d58 !important;
+
+        color: white !important;
+
+        font-size: 14px !important;
+
+        font-weight: 800 !important;
+
+        letter-spacing: 0.3px !important;
+
+        box-shadow:
+            0 10px 30px rgba(47,138,75,0.18) !important;
+
+        transition: 0.2s ease !important;
     }
 
     div[data-testid="stFormSubmitButton"] button:hover {
-        background: #245c3b;
-        transform: translateY(-2px);
-        box-shadow: 0 14px 30px rgba(23, 59, 40, 0.23);
+        background: #399957 !important;
+
+        border-color: #4aaa66 !important;
+
+        transform: translateY(-1px);
     }
 
-    /* ---------- RESULT HERO ---------- */
 
-    .result-card {
-        position: relative;
-        overflow: hidden;
-        margin-top: 2.5rem;
-        padding: 2.4rem;
-        border-radius: 24px;
+    /* ========================================================
+       RESULT CARD
+    ======================================================== */
+
+    .result {
+        margin-top: 35px;
+
+        padding: 32px;
+
+        border-radius: 20px;
+
         background:
             radial-gradient(
-                circle at 90% 20%,
-                rgba(126, 190, 108, 0.20),
-                transparent 30%
+                circle at 90% 15%,
+                rgba(79,160,96,0.15),
+                transparent 35%
             ),
-            linear-gradient(135deg, #173b28, #245c3b);
-        color: white;
-        box-shadow: 0 18px 45px rgba(23, 59, 40, 0.20);
+            #111a14;
+
+        border: 1px solid #285438;
+
+        box-shadow:
+            0 15px 45px rgba(0,0,0,0.25);
     }
 
     .result-label {
-        font-size: 0.76rem;
+        color: #6fc284;
+
+        font-size: 11px;
+
         font-weight: 800;
+
         letter-spacing: 1.3px;
+
         text-transform: uppercase;
-        color: #a9d5b0;
+    }
+
+    .result-row {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        gap: 30px;
     }
 
     .result-crop {
-        font-size: 3rem;
-        line-height: 1;
+        margin-top: 10px;
+
+        color: #f3f7f4;
+
+        font-size: 42px;
+
         font-weight: 900;
+
         letter-spacing: -1px;
-        margin-top: 0.7rem;
+
         text-transform: uppercase;
     }
 
-    .result-description {
-        color: #d4e5d7;
-        margin-top: 0.7rem;
-        font-size: 0.95rem;
+    .result-text {
+        margin-top: 7px;
+
+        color: #84928a;
+
+        font-size: 13px;
     }
 
-    .confidence-box {
-        margin-top: 1.7rem;
-        padding-top: 1.2rem;
-        border-top: 1px solid rgba(255,255,255,0.15);
+    .confidence {
+        min-width: 170px;
+
+        padding: 18px;
+
+        border-radius: 14px;
+
+        background: #0c120e;
+
+        border: 1px solid #24372a;
+
+        text-align: center;
     }
 
-    .confidence-title {
-        color: #b7cfbb;
-        font-size: 0.75rem;
+    .confidence-label {
+        color: #69766d;
+
+        font-size: 10px;
+
+        font-weight: 800;
+
+        letter-spacing: 1px;
+
         text-transform: uppercase;
-        letter-spacing: 0.8px;
     }
 
     .confidence-value {
-        font-size: 1.65rem;
-        font-weight: 850;
-        margin-top: 2px;
-    }
+        margin-top: 5px;
 
-    /* ---------- TOP PREDICTIONS ---------- */
+        color: #70c381;
 
-    .predictions-title {
-        margin-top: 2.8rem;
-        color: #173b28;
-        font-size: 1.35rem;
+        font-size: 25px;
+
         font-weight: 850;
     }
 
-    .predictions-subtitle {
-        color: #7b867d;
-        font-size: 0.85rem;
-        margin-bottom: 1.2rem;
+
+    /* ========================================================
+       TOP PREDICTIONS
+    ======================================================== */
+
+    .predictions-heading {
+        margin-top: 42px;
+
+        color: #e9efeb;
+
+        font-size: 20px;
+
+        font-weight: 850;
+    }
+
+    .predictions-subheading {
+        margin-top: 5px;
+
+        margin-bottom: 18px;
+
+        color: #68746c;
+
+        font-size: 12px;
     }
 
     .prediction-card {
-        background: white;
-        border: 1px solid #e1e8e1;
-        border-radius: 18px;
-        padding: 1.35rem;
         min-height: 145px;
-        box-shadow: 0 7px 25px rgba(31, 62, 42, 0.045);
+
+        padding: 20px;
+
+        border-radius: 16px;
+
+        background: #111714;
+
+        border: 1px solid #222d26;
+
+        box-shadow:
+            0 8px 25px rgba(0,0,0,0.18);
     }
 
-    .prediction-rank {
-        color: #8a958d;
-        font-size: 0.72rem;
+    .rank {
+        color: #69756d;
+
+        font-size: 10px;
+
         font-weight: 800;
-        letter-spacing: 0.8px;
+
+        letter-spacing: 1px;
+
         text-transform: uppercase;
     }
 
-    .prediction-crop {
-        color: #173b28;
-        font-size: 1.25rem;
+    .crop {
+        margin-top: 8px;
+
+        color: #edf3ef;
+
+        font-size: 18px;
+
         font-weight: 850;
-        margin-top: 7px;
+
         text-transform: capitalize;
     }
 
-    .prediction-percent {
-        color: #3d8b54;
-        font-size: 1rem;
-        font-weight: 800;
+    .probability {
         margin-top: 5px;
+
+        color: #66ba78;
+
+        font-size: 13px;
+
+        font-weight: 800;
     }
 
-    .progress-bg {
-        height: 7px;
-        width: 100%;
-        background: #edf1ed;
-        border-radius: 20px;
+    .bar {
+        height: 5px;
+
+        margin-top: 17px;
+
         overflow: hidden;
-        margin-top: 14px;
-    }
 
-    .progress-fill {
-        height: 100%;
-        background: #4d9361;
         border-radius: 20px;
+
+        background: #202a23;
     }
 
-    /* ---------- INFO STRIP ---------- */
+    .bar-fill {
+        height: 100%;
 
-    .info-strip {
-        margin-top: 2.5rem;
-        padding: 1rem 1.3rem;
-        border-radius: 14px;
-        background: #edf5ee;
-        border: 1px solid #dce9dd;
-        color: #49604f;
-        font-size: 0.82rem;
+        border-radius: 20px;
+
+        background: #3e9655;
     }
 
-    /* ---------- FOOTER ---------- */
+
+    /* ========================================================
+       SUMMARY
+    ======================================================== */
+
+    .summary {
+        margin-top: 25px;
+
+        padding: 15px 18px;
+
+        border-radius: 12px;
+
+        background: #0f1712;
+
+        border: 1px solid #202d24;
+
+        color: #77837b;
+
+        font-size: 11px;
+
+        line-height: 1.8;
+    }
+
+    .summary strong {
+        color: #aab5ae;
+    }
+
+
+    /* ========================================================
+       FOOTER
+    ======================================================== */
 
     .footer {
-        margin-top: 4rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid #e1e7e1;
+        margin-top: 60px;
+
+        padding-top: 22px;
+
+        border-top: 1px solid #202923;
+
         text-align: center;
-        color: #879188;
-        font-size: 0.76rem;
+
+        color: #515d55;
+
+        font-size: 11px;
     }
 
-    /* ---------- MOBILE ---------- */
 
-    @media (max-width: 768px) {
+    /* ========================================================
+       MOBILE
+    ======================================================== */
 
-        .main .block-container {
-            padding-left: 1rem;
-            padding-right: 1rem;
-        }
+    @media (max-width: 700px) {
 
-        .hero h1 {
-            font-size: 2.25rem;
-        }
-
-        .result-crop {
-            font-size: 2.3rem;
-        }
-
-        .top-nav {
-            margin-bottom: 2rem;
+        .hero-title {
+            font-size: 35px;
         }
 
         .nav-right {
             display: none;
         }
+
+        .result-row {
+            flex-direction: column;
+
+            align-items: flex-start;
+        }
+
+        .confidence {
+            width: 100%;
+        }
+
     }
 
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+</style>
+""")
 
 
 # ============================================================
@@ -418,99 +597,94 @@ pipeline = bundle["pipeline"]
 
 
 # ============================================================
-# HEADER
+# NAVIGATION
 # ============================================================
 
-st.markdown(
-    """
-    <div class="top-nav">
-        <div class="brand">
-            <div class="brand-icon">🌾</div>
-            <div>Agri-AI</div>
-        </div>
+st.html("""
+<div class="nav">
 
-        <div class="nav-right">
-            Smart Agriculture • Machine Learning
-        </div>
+    <div class="brand">
+        <div class="brand-icon">🌾</div>
+        <div>Agri-AI</div>
     </div>
-    """,
-    unsafe_allow_html=True,
-)
+
+    <div class="nav-right">
+        Smart Agriculture&nbsp;&nbsp;•&nbsp;&nbsp;Machine Learning
+    </div>
+
+</div>
+""")
 
 
 # ============================================================
 # HERO
 # ============================================================
 
-st.markdown(
-    """
-    <div class="hero">
+st.html("""
+<div class="hero">
 
-        <div class="hero-tag">AI-Powered Agriculture</div>
-
-        <h1>
-            Find the right crop<br>
-            <span>for your soil.</span>
-        </h1>
-
-        <p>
-            Enter your soil and environmental conditions.
-            Our machine learning model analyzes the inputs and
-            recommends the most suitable crop for cultivation.
-        </p>
-
+    
+    <div class="hero-title">
+        Find the right crop<br>
+        <span>for your soil.</span>
     </div>
-    """,
-    unsafe_allow_html=True,
-)
+
+    <div class="hero-description">
+        Enter your soil and environmental conditions.
+        Agri-AI analyzes these parameters using a machine
+        learning model and recommends the most suitable crop.
+    </div>
+
+</div>
+""")
 
 
 # ============================================================
 # INPUT FORM
 # ============================================================
 
-with st.form("crop_recommendation_form"):
+with st.form("crop_form"):
 
-    col1, col2 = st.columns(2, gap="large")
+    left, right = st.columns(2, gap="large")
+
 
     # --------------------------------------------------------
-    # SOIL CARD
+    # SOIL
     # --------------------------------------------------------
 
-    with col1:
+    with left:
 
         with st.container(border=True):
 
-            st.markdown(
-                """
-                <div class="section-heading">
+            st.html("""
+            <div class="section-header">
 
-                    <div class="section-icon">🌱</div>
+                <div class="section-icon">
+                    🌱
+                </div>
 
-                    <div>
-                        <div class="section-title">
-                            Soil Conditions
-                        </div>
-
-                        <div class="section-subtitle">
-                            Nutrient and acidity levels
-                        </div>
+                <div>
+                    <div class="section-title">
+                        Soil Conditions
                     </div>
 
+                    <div class="section-subtitle">
+                        Nutrient and acidity levels
+                    </div>
                 </div>
-                """,
-                unsafe_allow_html=True,
-            )
 
-            soil_a, soil_b = st.columns(2)
+            </div>
+            """)
 
-            with soil_a:
+            a, b = st.columns(2)
+
+            with a:
+
                 N = st.number_input(
                     "Nitrogen (N)",
                     min_value=0.0,
                     value=90.0,
                     step=1.0,
-                    help="Nitrogen content in the soil.",
                 )
 
                 P = st.number_input(
@@ -518,16 +692,15 @@ with st.form("crop_recommendation_form"):
                     min_value=0.0,
                     value=42.0,
                     step=1.0,
-                    help="Phosphorus content in the soil.",
                 )
 
-            with soil_b:
+            with b:
+
                 K = st.number_input(
                     "Potassium (K)",
                     min_value=0.0,
                     value=43.0,
                     step=1.0,
-                    help="Potassium content in the soil.",
                 )
 
                 ph = st.number_input(
@@ -536,48 +709,45 @@ with st.form("crop_recommendation_form"):
                     max_value=14.0,
                     value=6.5,
                     step=0.1,
-                    help="Soil acidity / alkalinity.",
                 )
 
 
     # --------------------------------------------------------
-    # ENVIRONMENT CARD
+    # ENVIRONMENT
     # --------------------------------------------------------
 
-    with col2:
+    with right:
 
         with st.container(border=True):
 
-            st.markdown(
-                """
-                <div class="section-heading">
+            st.html("""
+            <div class="section-header">
 
-                    <div class="section-icon">☁️</div>
+                <div class="section-icon">
+                    🌦️
+                </div>
 
-                    <div>
-                        <div class="section-title">
-                            Environmental Conditions
-                        </div>
-
-                        <div class="section-subtitle">
-                            Climate and rainfall parameters
-                        </div>
+                <div>
+                    <div class="section-title">
+                        Environmental Conditions
                     </div>
 
+                    <div class="section-subtitle">
+                        Climate and rainfall parameters
+                    </div>
                 </div>
-                """,
-                unsafe_allow_html=True,
-            )
 
-            env_a, env_b = st.columns(2)
+            </div>
+            """)
 
-            with env_a:
+            a, b = st.columns(2)
+
+            with a:
 
                 temperature = st.number_input(
                     "Temperature (°C)",
                     value=25.0,
                     step=0.5,
-                    help="Average temperature in degrees Celsius.",
                 )
 
                 humidity = st.number_input(
@@ -586,37 +756,30 @@ with st.form("crop_recommendation_form"):
                     max_value=100.0,
                     value=80.0,
                     step=1.0,
-                    help="Relative humidity percentage.",
                 )
 
-            with env_b:
+            with b:
 
                 rainfall = st.number_input(
                     "Rainfall (mm)",
                     min_value=0.0,
                     value=200.0,
                     step=1.0,
-                    help="Expected rainfall in millimeters.",
                 )
 
-                st.markdown(
-                    """
-                    <div style="
-                        height: 100%;
-                        min-height: 65px;
-                        display:flex;
-                        align-items:center;
-                        color:#7b867d;
-                        font-size:0.78rem;
-                        padding:0.5rem;
-                    ">
-                        🌦️ Climate conditions help determine
-                        which crops are naturally suited to
-                        the selected environment.
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+                st.html("""
+                <div style="
+                    color:#647168;
+                    font-size:11px;
+                    line-height:1.5;
+                    margin-top:28px;
+                ">
+                    🌦️ Climate parameters help determine
+                    which crops are best suited to the
+                    selected environment.
+                </div>
+                """)
+
 
     st.write("")
 
@@ -633,67 +796,68 @@ with st.form("crop_recommendation_form"):
 if submitted:
 
     row = pd.DataFrame(
-        [
-            {
-                "N": N,
-                "P": P,
-                "K": K,
-                "temperature": temperature,
-                "humidity": humidity,
-                "ph": ph,
-                "rainfall": rainfall,
-            }
-        ]
+        [{
+            "N": N,
+            "P": P,
+            "K": K,
+            "temperature": temperature,
+            "humidity": humidity,
+            "ph": ph,
+            "rainfall": rainfall,
+        }]
     )
 
-    # Prediction
     prediction = pipeline.predict(row)[0]
 
-    # Probabilities
     probabilities = pipeline.predict_proba(row)[0]
 
-    # Model classes
     classes = pipeline.named_steps["model"].classes_
 
-    # Top 3
     top_indices = probabilities.argsort()[::-1][:3]
 
-    top_crops = [
-        {
-            "crop": classes[i],
-            "probability": float(probabilities[i] * 100),
-        }
-        for i in top_indices
-    ]
+    top_predictions = []
 
-    best_probability = top_crops[0]["probability"]
+    for index in top_indices:
+
+        top_predictions.append({
+            "crop": classes[index],
+            "probability": probabilities[index] * 100,
+        })
+
+
+    best_probability = top_predictions[0]["probability"]
 
 
     # ========================================================
-    # MAIN RESULT
+    # RESULT
     # ========================================================
 
-    st.markdown(
-        f"""
-        <div class="result-card">
+    st.html(f"""
+    <div class="result">
 
-            <div class="result-label">
-                ✦ AI Recommendation
+        <div class="result-row">
+
+            <div>
+
+                <div class="result-label">
+                    ✦ AI Recommendation
+                </div>
+
+                <div class="result-crop">
+                    🌾 {prediction}
+                </div>
+
+                <div class="result-text">
+                    Highest probability crop based on your
+                    soil and environmental conditions.
+                </div>
+
             </div>
 
-            <div class="result-crop">
-                🌾 {prediction}
-            </div>
+            <div class="confidence">
 
-            <div class="result-description">
-                This is the highest-probability crop based on
-                the soil and environmental conditions you provided.
-            </div>
-
-            <div class="confidence-box">
-
-                <div class="confidence-title">
-                    Model confidence
+                <div class="confidence-label">
+                    Model Confidence
                 </div>
 
                 <div class="confidence-value">
@@ -703,109 +867,97 @@ if submitted:
             </div>
 
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
+
+    </div>
+    """)
 
 
     # ========================================================
-    # TOP 3 PREDICTIONS
+    # TOP 3
     # ========================================================
 
-    st.markdown(
-        """
-        <div class="predictions-title">
-            Top 3 Recommendations
-        </div>
+    st.html("""
+    <div class="predictions-heading">
+        Top 3 Recommendations
+    </div>
 
-        <div class="predictions-subtitle">
-            Alternative crops ranked by model probability
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    <div class="predictions-subheading">
+        Alternative crops ranked by model probability
+    </div>
+    """)
 
-    prediction_columns = st.columns(3, gap="medium")
+
+    columns = st.columns(3, gap="medium")
 
     medals = ["🥇", "🥈", "🥉"]
 
-    for index, (column, item) in enumerate(
-        zip(prediction_columns, top_crops)
+    for i, (column, item) in enumerate(
+        zip(columns, top_predictions)
     ):
 
         with column:
 
             probability = item["probability"]
 
-            # Keep progress bar visually within 100%
-            progress_width = min(probability, 100)
+            width = min(probability, 100)
 
-            st.markdown(
-                f"""
-                <div class="prediction-card">
+            st.html(f"""
+            <div class="prediction-card">
 
-                    <div class="prediction-rank">
-                        {medals[index]} Rank {index + 1}
-                    </div>
-
-                    <div class="prediction-crop">
-                        {item["crop"]}
-                    </div>
-
-                    <div class="prediction-percent">
-                        {probability:.2f}%
-                    </div>
-
-                    <div class="progress-bg">
-                        <div
-                            class="progress-fill"
-                            style="width:{progress_width}%"
-                        ></div>
-                    </div>
-
+                <div class="rank">
+                    {medals[i]} &nbsp; RANK {i + 1}
                 </div>
-                """,
-                unsafe_allow_html=True,
-            )
+
+                <div class="crop">
+                    {item["crop"]}
+                </div>
+
+                <div class="probability">
+                    {probability:.2f}%
+                </div>
+
+                <div class="bar">
+                    <div
+                        class="bar-fill"
+                        style="width:{width}%"
+                    ></div>
+                </div>
+
+            </div>
+            """)
 
 
     # ========================================================
     # INPUT SUMMARY
     # ========================================================
 
-    st.markdown(
-        f"""
-        <div class="info-strip">
+    st.html(f"""
+    <div class="summary">
 
-            <strong>📊 Analysis summary:</strong>
+        <strong>Analysis parameters:</strong>
 
-            N {N:.1f} &nbsp;•&nbsp;
-            P {P:.1f} &nbsp;•&nbsp;
-            K {K:.1f} &nbsp;•&nbsp;
-            pH {ph:.1f} &nbsp;•&nbsp;
-            {temperature:.1f}°C &nbsp;•&nbsp;
-            {humidity:.1f}% humidity &nbsp;•&nbsp;
-            {rainfall:.1f} mm rainfall
+        &nbsp; N {N:.1f}
+        &nbsp;•&nbsp; P {P:.1f}
+        &nbsp;•&nbsp; K {K:.1f}
+        &nbsp;•&nbsp; pH {ph:.1f}
+        &nbsp;•&nbsp; {temperature:.1f}°C
+        &nbsp;•&nbsp; {humidity:.1f}% humidity
+        &nbsp;•&nbsp; {rainfall:.1f} mm rainfall
 
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    </div>
+    """)
 
 
 # ============================================================
 # FOOTER
 # ============================================================
 
-st.markdown(
-    """
-    <div class="footer">
+st.html("""
+<div class="footer">
 
-        🌾 Agri-AI Crop Recommendation &nbsp;•&nbsp;
-        Powered by Machine Learning &nbsp;•&nbsp;
-        Random Forest
+    🌾 Agri-AI Crop Recommendation
+    &nbsp;•&nbsp;
+    Random Forest Machine Learning
 
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+</div>
+""")

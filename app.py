@@ -608,10 +608,7 @@ st.html("""
         <div>Agri-AI</div>
     </div>
 
-    <div class="nav-right">
-        Smart Agriculture&nbsp;&nbsp;•&nbsp;&nbsp;Machine Learning
-    </div>
-
+   
 </div>
 """)
 
@@ -956,8 +953,7 @@ st.html("""
 <div class="footer">
 
     🌾 Agri-AI Crop Recommendation
-    &nbsp;•&nbsp;
-    Random Forest Machine Learning
+    
 
 </div>
 """)

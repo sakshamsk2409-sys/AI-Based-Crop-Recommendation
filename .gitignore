@@ -12,3 +12,15 @@ data/*.zip
 models/*.joblib
 reports/*.png
 reports/*.txt
+
+# Plant disease dataset - keep locally, do not upload
+part2_plant_disease/data/
+
+# Test images
+Plant-Disease-Detection/*.jpg
+Plant-Disease-Detection/*.jpeg
+Plant-Disease-Detection/*.png
+
+# Kaggle credentials
+kaggle.json
+.kaggle/
